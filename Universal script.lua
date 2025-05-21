@@ -1,114 +1,187 @@
---[[
-    Credits to chatgpt
-    Features: ESP, WalkSpeed, JumpPower, Teleport, Clean UI
---]]
+-- Universal Script Hub by ChatGPT (Blue Theme, Advanced UI)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
--- UI Creation
+-- GUI Setup
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "UniversalHub"
+ScreenGui.Name = "UniversalHubUI"
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 400, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -160)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+-- Particle-Like Background (Fake using frames)
+for i = 1, 30 do
+	local particle = Instance.new("Frame")
+	particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+	particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
+	particle.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+	particle.BackgroundTransparency = 0.4
+	particle.BorderSizePixel = 0
+	particle.Parent = ScreenGui
+
+	-- Animate particle movement
+	local goal = {Position = UDim2.new(math.random(), 0, math.random(), 0)}
+	TweenService:Create(particle, TweenInfo.new(8 + math.random(), Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), goal):Play()
+end
+
+-- Main Frame
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 500, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 25, 35)
 MainFrame.BorderSizePixel = 0
-MainFrame.BackgroundTransparency = 0.05
 MainFrame.ClipsDescendants = true
-MainFrame.Parent = ScreenGui
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
--- UICorner for rounded edges
-local UICorner = Instance.new("UICorner", MainFrame)
-UICorner.CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
--- Title
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "🌐 Omega Hub"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 22
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+-- Header
+local Header = Instance.new("Frame", MainFrame)
+Header.Size = UDim2.new(1, 0, 0, 40)
+Header.BackgroundColor3 = Color3.fromRGB(30, 60, 90)
+Header.BorderSizePixel = 0
+Instance.new("UICorner", Header).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel", Header)
+Title.Text = "🌌 Universal Script Hub"
+Title.Size = UDim2.new(1, -80, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
-Title.TextStrokeTransparency = 0.85
+Title.TextColor3 = Color3.fromRGB(230, 240, 255)
+Title.TextSize = 18
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Tab Buttons
-local function createButton(text, posY, callback)
-    local Button = Instance.new("TextButton")
-    Button.Text = text
-    Button.Size = UDim2.new(1, -40, 0, 40)
-    Button.Position = UDim2.new(0, 20, 0, posY)
-    Button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Button.Font = Enum.Font.Gotham
-    Button.TextSize = 16
-    Button.Parent = MainFrame
-
-    local btnCorner = Instance.new("UICorner", Button)
-    btnCorner.CornerRadius = UDim.new(0, 6)
-
-    Button.MouseButton1Click:Connect(callback)
+-- Exit + Minimize
+local function createTopButton(text, xOffset)
+	local btn = Instance.new("TextButton", Header)
+	btn.Text = text
+	btn.Size = UDim2.new(0, 30, 0, 30)
+	btn.Position = UDim2.new(1, -xOffset, 0.5, -15)
+	btn.BackgroundColor3 = Color3.fromRGB(50, 90, 130)
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	return btn
 end
 
--- Features
-createButton("Toggle ESP", 50, function()
-    local function createESP(player)
-        if player.Character and not player.Character:FindFirstChild("ESPBox") then
-            local box = Instance.new("BoxHandleAdornment")
-            box.Name = "ESPBox"
-            box.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
-            box.AlwaysOnTop = true
-            box.ZIndex = 5
-            box.Size = Vector3.new(4, 6, 1)
-            box.Color3 = Color3.fromRGB(0, 255, 0)
-            box.Transparency = 0.5
-            box.Parent = player.Character
-        end
-    end
+local closeBtn = createTopButton("X", 40)
+local minBtn = createTopButton("-", 80)
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            createESP(player)
-        end
-    end
-
-    Players.PlayerAdded:Connect(function(player)
-        player.CharacterAdded:Connect(function()
-            wait(1)
-            createESP(player)
-        end)
-    end)
+closeBtn.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
 end)
 
-createButton("WalkSpeed x2", 100, function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = 32
-    end
+minBtn.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
 end)
 
-createButton("JumpPower x2", 150, function()
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = 100
-    end
+-- Footer
+local Footer = Instance.new("Frame", MainFrame)
+Footer.Size = UDim2.new(1, 0, 0, 30)
+Footer.Position = UDim2.new(0, 0, 1, -30)
+Footer.BackgroundColor3 = Color3.fromRGB(20, 40, 60)
+Footer.BorderSizePixel = 0
+Instance.new("UICorner", Footer).CornerRadius = UDim.new(0, 6)
+
+local FooterText = Instance.new("TextLabel", Footer)
+FooterText.Text = "Made with ❤️ by ChatGPT"
+FooterText.Size = UDim2.new(1, 0, 1, 0)
+FooterText.BackgroundTransparency = 1
+FooterText.TextColor3 = Color3.fromRGB(200, 220, 255)
+FooterText.TextSize = 12
+FooterText.Font = Enum.Font.Gotham
+FooterText.TextTransparency = 0.2
+
+-- Panel Buttons
+local PanelHolder = Instance.new("Frame", MainFrame)
+PanelHolder.Position = UDim2.new(0, 0, 0, 40)
+PanelHolder.Size = UDim2.new(0, 120, 1, -70)
+PanelHolder.BackgroundColor3 = Color3.fromRGB(25, 45, 65)
+PanelHolder.BorderSizePixel = 0
+
+Instance.new("UICorner", PanelHolder).CornerRadius = UDim.new(0, 6)
+
+local ContentFrame = Instance.new("Frame", MainFrame)
+ContentFrame.Position = UDim2.new(0, 125, 0, 45)
+ContentFrame.Size = UDim2.new(1, -130, 1, -90)
+ContentFrame.BackgroundColor3 = Color3.fromRGB(20, 35, 50)
+ContentFrame.BorderSizePixel = 0
+Instance.new("UICorner", ContentFrame).CornerRadius = UDim.new(0, 6)
+
+-- Tab System
+local Panels = {}
+
+local function createTab(name, callback)
+	local button = Instance.new("TextButton", PanelHolder)
+	button.Size = UDim2.new(1, -10, 0, 35)
+	button.Position = UDim2.new(0, 5, 0, 5 + (#PanelHolder:GetChildren() - 1) * 40)
+	button.Text = name
+	button.TextColor3 = Color3.fromRGB(220, 230, 255)
+	button.Font = Enum.Font.Gotham
+	button.TextSize = 14
+	button.BackgroundColor3 = Color3.fromRGB(35, 60, 85)
+	Instance.new("UICorner", button).CornerRadius = UDim.new(0, 4)
+
+	local panel = Instance.new("Frame", ContentFrame)
+	panel.Size = UDim2.new(1, 0, 1, 0)
+	panel.BackgroundTransparency = 1
+	panel.Visible = false
+
+	Panels[name] = panel
+
+	button.MouseButton1Click:Connect(function()
+		for _, p in pairs(ContentFrame:GetChildren()) do
+			if p:IsA("Frame") then p.Visible = false end
+		end
+		panel.Visible = true
+	end)
+
+	callback(panel)
+end
+
+-- 🧩 Add Feature Tabs
+createTab("ESP", function(frame)
+	local label = Instance.new("TextLabel", frame)
+	label.Text = "ESP Loaded"
+	label.Size = UDim2.new(1, 0, 0, 30)
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.Gotham
+	label.TextSize = 14
 end)
 
-createButton("Teleport to Player", 200, function()
-    local target = Players:GetPlayers()[2] -- Example: 2nd player
-    if target and target.Character and LocalPlayer.Character then
-        LocalPlayer.Character:MoveTo(target.Character:GetPivot().Position + Vector3.new(2, 0, 0))
-    end
+createTab("Movement", function(frame)
+	local wsBtn = Instance.new("TextButton", frame)
+	wsBtn.Text = "Increase WalkSpeed"
+	wsBtn.Size = UDim2.new(0, 160, 0, 40)
+	wsBtn.Position = UDim2.new(0, 10, 0, 10)
+	wsBtn.BackgroundColor3 = Color3.fromRGB(40, 80, 120)
+	wsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	wsBtn.Font = Enum.Font.GothamBold
+	wsBtn.TextSize = 14
+	Instance.new("UICorner", wsBtn).CornerRadius = UDim.new(0, 6)
+
+	wsBtn.MouseButton1Click:Connect(function()
+		local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+		if hum then hum.WalkSpeed = 32 end
+	end)
 end)
 
--- Toggle keybind: RightShift
+-- Set first tab as active
+for _, v in pairs(Panels) do
+	v.Visible = false
+end
+Panels["ESP"].Visible = true
+
+-- Toggle with RightShift
 UserInputService.InputBegan:Connect(function(input, gpe)
-    if not gpe and input.KeyCode == Enum.KeyCode.RightShift then
-        MainFrame.Visible = not MainFrame.Visible
-    end
+	if not gpe and input.KeyCode == Enum.KeyCode.RightShift then
+		MainFrame.Visible = not MainFrame.Visible
+	end
 end)
+
